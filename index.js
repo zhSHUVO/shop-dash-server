@@ -17,12 +17,13 @@ const client = new MongoClient(process.env.DB_URL, {
 async function run() {
     try {
         await client.connect();
+
         const productCollection = client.db("shop-dash").collection("products");
 
         const usersCollection = client.db("shop-dash").collection("users");
 
         // loading all products
-        app.get("/product", async (req, res) => {
+        app.get("/api/products", async (req, res) => {
             const query = {};
             const cursor = await productCollection.find(query);
             const products = await cursor.toArray();
@@ -30,47 +31,49 @@ async function run() {
         });
 
         // load one products
-        app.get("/product/:id", async (req, res) => {
+        app.get("/api/products/:id", async (req, res) => {
             const id = req.params.id;
-            const query = { _id: ObjectId(id) };
-            const electronic = await productCollection.findOne(query);
-            res.send(electronic);
+            // const query = { _id: ObjectId(id) };
+            const product = await productCollection.findOne({
+                _id: new ObjectId(id),
+            });
+            res.send(product);
         });
 
         // adding new product
-        app.post("/product", async (req, res) => {
+        app.post("/api/products", async (req, res) => {
             const product = req.body;
-            const result = await productCollection.insertOne(product);
-            res.send(result);
+            const newProduct = await productCollection.insertOne(product);
+            res.send(newProduct);
         });
 
         // delete product
-        app.delete("(/product/:id)", async (req, res) => {
+        app.delete("(/api/products/:id)", async (req, res) => {
             const id = req.params.id;
             const query = { _id: ObjectId(id) };
-            const result = await productCollection.deleteOne(query);
-            res.send(result);
+            const deletedProduct = await productCollection.deleteOne(query);
+            res.send(deletedProduct);
         });
 
         // load all users
-        app.get("/users", async (req, res) => {
+        app.get("/api/auth/user", async (req, res) => {
             const users = await usersCollection.find().toArray();
             res.send(users);
         });
 
         // adding new user
-        app.post("/users", async (req, res) => {
-            const users = req.body;
-            const result = await usersCollection.insertOne(users);
-            res.send(result);
+        app.post("/api/auth/user", async (req, res) => {
+            const user = req.body;
+            const newUser = await usersCollection.insertOne(user);
+            res.send(newUser);
         });
 
         // delete user
-        app.delete("(/user/:id)", async (req, res) => {
+        app.delete("(/api/auth/user/:id)", async (req, res) => {
             const id = req.params.id;
             const query = { _id: ObjectId(id) };
-            const result = await usersCollection.deleteOne(query);
-            res.send(result);
+            const deletedUser = await usersCollection.deleteOne(query);
+            res.send(deletedUser);
         });
     } finally {
     }
