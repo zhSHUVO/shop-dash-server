@@ -1,6 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 const app = express();
+const bcrypt = require("bcrypt");
 const port = process.env.PORT || 5000;
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 require("dotenv").config();
@@ -21,6 +22,8 @@ async function run() {
         const productCollection = client.db("shop-dash").collection("products");
 
         const usersCollection = client.db("shop-dash").collection("users");
+
+        const ordersCollection = client.db("shop-dash").collection("orders");
 
         // loading all products
         app.get("/api/products", async (req, res) => {
@@ -47,14 +50,6 @@ async function run() {
             res.send(newProduct);
         });
 
-        // delete product
-        app.delete("(/api/products/:id)", async (req, res) => {
-            const id = req.params.id;
-            const query = { _id: ObjectId(id) };
-            const deletedProduct = await productCollection.deleteOne(query);
-            res.send(deletedProduct);
-        });
-
         // load all users
         app.get("/api/auth/user", async (req, res) => {
             const users = await usersCollection.find().toArray();
@@ -63,17 +58,26 @@ async function run() {
 
         // adding new user
         app.post("/api/auth/user", async (req, res) => {
-            const user = req.body;
-            const newUser = await usersCollection.insertOne(user);
+            const { phone, password } = req.body;
+            const hashedPassword = await bcrypt.hash(password, 10);
+            const newUser = await usersCollection.insertOne({
+                phone,
+                password: hashedPassword,
+            });
             res.send(newUser);
         });
 
-        // delete user
-        app.delete("(/api/auth/user/:id)", async (req, res) => {
-            const id = req.params.id;
-            const query = { _id: ObjectId(id) };
-            const deletedUser = await usersCollection.deleteOne(query);
-            res.send(deletedUser);
+        // adding new order
+        app.post("/api/orders", async (req, res) => {
+            const order = req.body;
+            const newOrder = await ordersCollection.insertOne(order);
+            res.send(newOrder);
+        });
+
+        // load all orders
+        app.get("/api/orders", async (req, res) => {
+            const orders = await ordersCollection.find().toArray();
+            res.send(orders);
         });
     } finally {
     }
